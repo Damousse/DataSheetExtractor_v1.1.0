@@ -9,16 +9,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import xlsxwriter
-import re
 import tkinter
 from tkinter import filedialog
-
-
+import pytesseract
+from pytesseract import Output
 try:
     from PIL import Image
 except ImportError:
     import Image
-import pytesseract
 
 
 def init_var():
@@ -74,10 +72,16 @@ def sort_contours(cnts, method="left-to-right"):
 
 
 def detect_boxes_in_the_png_file(png_file):
-    fname = 'page' + str(i) + '.png'
+    dirName = 'PagesFromPdfFile'
+    folder_exist = os.path.isdir(dirName)
+    directoryPagesFromPdfFile = os.path.join(os.getcwd(), dirName)
+    if not folder_exist:
+        os.mkdir(directoryPagesFromPdfFile)
+    fname = directoryPagesFromPdfFile+'\page' + str(i) + '.png'
     png_file.save(fname, 'PNG')
 
-    img = cv2.imread(fname)
+    img = cv2.imread(fname, cv2.IMREAD_COLOR)
+
     # RGB to Gray
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     gray = ~gray
@@ -180,22 +184,33 @@ def mkdir_and_imwrite_selected_images_and_do_pytesseract():
         os.mkdir(pathTxt)
 
     for i in range(len(imagesToPrint)):
-        x, y, w, h = imagesToPrint[i]
-        tmp_img = img[y:y + h, x:x + w]
-        imgName = pathImages + '\Image' + str(idxImagesToPrint) + '.png'
-        # Blurring the image so that Pytesseract can detect char better
-        tmp_img2 = cv2.GaussianBlur(tmp_img, (3, 3), 0)
-        cv2.imwrite(imgName, tmp_img2)
-        res = pytesseract.image_to_string(Image.open(imgName), config='--oem 3 --psm 4')
-        print('Res : \n' + res)
+        minimumSizeOfARef = 10  # A02B-XXXX- = 10 char (4+1+4+1)
         txtName = pathTxt + '\Text' + str(idxImagesToPrint) + '.csv'
         f = open(txtName, 'w')
-        f.write(res)
+        f.write('Ref\n')
+        x, y, w, h = imagesToPrint[i]
+        tmp_img = img[y:y + h, x:x + w]
+
+        #Separate all of the text boxes for better reading of the OCR
+        d = pytesseract.image_to_data(tmp_img, output_type=Output.DICT)
+        n_boxes = len(d['level'])
+        for i in range(n_boxes):
+            if d["text"][i] != "" and len(d["text"][i]) > minimumSizeOfARef:
+                (x2, y2, w2, h2) = (d['left'][i], d['top'][i], d['width'][i], d['height'][i])
+                my_tmp_img = tmp_img[y2:y2+h2, x2:x2+w2]
+                #Padding of the image for better results of the OCR
+                padding_size = 10
+                mytmp2 = cv2.copyMakeBorder(my_tmp_img, padding_size, padding_size, padding_size, padding_size, cv2.BORDER_CONSTANT, value=[255, 255, 255])
+
+                tmp_img2 = cv2.GaussianBlur(mytmp2, (3, 3), 0)
+                plotImg(tmp_img2, "tmp_img2")
+                res = pytesseract.image_to_string(tmp_img2, config='--oem 3 --psm 4')
+                print('Res : \n' + res)
+                f.write(res+"\n")
         f.close()
         idxImagesToPrint = idxImagesToPrint + 1
-
-        # TODO - 2 - regarder le CRNN et autres sujets sur l'OCR en Deep Learning
-
+        # TODO - 2 - regarder le site car l'OCR basique ne marche pas tout le temps... Essayer de récupérer avec du Custom Deep Learning
+        # https://nanonets.com/blog/attention-ocr-for-text-recogntion/
 
 
 def extract_reference_and_create_excel_file():
@@ -207,19 +222,18 @@ def extract_reference_and_create_excel_file():
     worksheetHardware = workbook.add_worksheet('Hardware')
     worksheetOptions = workbook.add_worksheet('Options')
     cpt = 0
-    worksheetHardware.write(cpt,0,"Référence")
+    worksheetHardware.write(cpt, 0, "Référence")
     worksheetHardware.write(cpt, 1, "Max Value Assembly")
-    worksheetOptions.write(cpt,0,"Référence")
-    worksheetOptions.write(cpt,1,"FROM")
-    worksheetOptions.write(cpt,2,"SRAM")
-    worksheetOptions.write(cpt,3,"DRAM")
+    worksheetOptions.write(cpt, 0, "Référence")
+    worksheetOptions.write(cpt, 1, "FROM")
+    worksheetOptions.write(cpt, 2, "SRAM")
+    worksheetOptions.write(cpt, 3, "DRAM")
     cpt = 1
 
     for i in range(number_files):  # loop for all txt
         line = pd.read_csv("./Text/Text" + str(i + 1) + ".csv")
         for completeRef in line.values:
-            completeRef[0].replace(" ", "")
-            EndOfRef = completeRef[0].split('-')[-1]
+            EndOfRef = completeRef[0].replace(" ", "").split('-')[-1]
             if EndOfRef != "" and len(EndOfRef) > 3:
                 if i == 0:  # hardware CNC
                     worksheetHardware.write(cpt, 0, EndOfRef)

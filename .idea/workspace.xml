@@ -2,6 +2,31 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="9d7e6a39-e9b0-4af0-9612-6c6751fc9956" name="Changes" comment="V1.1.1 &amp; requirements.txt with venv">
+      <change afterPath="$PROJECT_DIR$/CreateRequirements.bat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/old_versions/5-Last_Version_With_OCR_few_improvements_but_no_strong_enough_for_good_results.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/DataSheetExtract.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/DataSheetExtract.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ImagesToPrint/Image1.png" beforeDir="false" afterPath="$PROJECT_DIR$/ImagesToPrint/Image1.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ImagesToPrint/Image2.png" beforeDir="false" afterPath="$PROJECT_DIR$/ImagesToPrint/Image2.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ImagesToPrint/Image3.png" beforeDir="false" afterPath="$PROJECT_DIR$/ImagesToPrint/Image3.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ImagesToPrint/Image4.png" beforeDir="false" afterPath="$PROJECT_DIR$/ImagesToPrint/Image4.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Results.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/Results.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Text/Text1.csv" beforeDir="false" afterPath="$PROJECT_DIR$/Text/Text1.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Text/Text2.csv" beforeDir="false" afterPath="$PROJECT_DIR$/Text/Text2.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Text/Text3.csv" beforeDir="false" afterPath="$PROJECT_DIR$/Text/Text3.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Text/Text4.csv" beforeDir="false" afterPath="$PROJECT_DIR$/Text/Text4.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Text/Text5.csv" beforeDir="false" afterPath="$PROJECT_DIR$/Text/Text5.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/old_versions/ConvertPDF_to_Excel_With_OCR.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/old_versions/Convert_PDF_to_Images_PNG.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/old_versions/Convert_PDF_to_Several_Separated_Boxes.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/old_versions/Convert_PDF_to_Several_Separated_Boxes_And_Can_Select_Boxes_With_Colors_Changes_When_Right_Clicking.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/page0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/page1.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/page2.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/page3.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/page4.png" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -27,10 +52,12 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/old_versions" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Damien\Documents\GitHub\DataSheetExtractor_v1.1.0\old_versions" />
       <recent name="C:\Users\94000187\Documents\FANUC\source\PycharmProjects\DataSheetExtract\old_versions" />
     </key>
   </component>
@@ -107,10 +134,22 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="V1.1.1" />
     <MESSAGE value="V1.1.1 &amp; requirements.txt with venv" />
     <option name="LAST_COMMIT_MESSAGE" value="V1.1.1 &amp; requirements.txt with venv" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/old_versions/5-Last_Version_With_OCR_few_improvements_but_no_strong_enough_for_good_results.py</url>
+          <line>193</line>
+          <option name="timeStamp" value="58" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>
