@@ -216,7 +216,6 @@ def extract_reference_and_create_excel_file():
     cpt = 1
 
     for i in range(number_files):  # loop for all txt
-        string = "./Text/Text" + str(i + 1) + ".csv"
         line = pd.read_csv("./Text/Text" + str(i + 1) + ".csv")
         for completeRef in line.values:
             completeRef[0].replace(" ", "")
