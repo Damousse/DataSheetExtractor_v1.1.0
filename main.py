@@ -1,6 +1,10 @@
 # Press Maj+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 # DBM - Command line to create .exe file : pyinstaller .\main.py inside the venv
+# DBM - Tesseract v5.0 installed
+# DBM - 200 dpi seems optimum & letters might have a font size of 30-33 (pixels) regarding the litterature
+# https://groups.google.com/g/tesseract-ocr/c/Wdh_JJwnw94/m/24JHDYQbBQAJ
+# DBM -
 
 import os
 from pdf2image import convert_from_path
@@ -10,9 +14,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import xlsxwriter
 import tkinter
+from tkinter import *
 from tkinter import filedialog
 import pytesseract
 from pytesseract import Output
+import shutil
 try:
     from PIL import Image
 except ImportError:
@@ -25,6 +31,8 @@ def init_var():
     imagesToPrint = []
     idxImagesToPrint = 1
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+    ifFolderExistsDeleteAllFilesFromIt('ImagesToPrint')
+    ifFolderExistsDeleteAllFilesFromIt('Text')
 
 
 def getPdfFile():
@@ -176,16 +184,19 @@ def select_box_by_click(img, truecontours):
     cv2.destroyAllWindows()
 
 
+def ifFolderExistsDeleteAllFilesFromIt(folderName):
+    folder_exist = os.path.isdir(folderName)
+    pathOfFolder = os.path.join(os.getcwd(), folderName)
+    if folder_exist:
+        shutil.rmtree(pathOfFolder)
+
+    os.mkdir(pathOfFolder)
+
+
 def mkdir_and_imwrite_selected_images_and_do_pytesseract():
     global idxImagesToPrint
-    folder_exist = os.path.isdir('ImagesToPrint')
-    pathImages = os.path.join(os.getcwd(), 'ImagesToPrint')
-    if not folder_exist:
-        os.mkdir(pathImages)
-    folder_exist = os.path.isdir('Text')
+
     pathTxt = os.path.join(os.getcwd(), 'Text')
-    if not folder_exist:
-        os.mkdir(pathTxt)
 
     for i in range(len(imagesToPrint)):
 
@@ -194,36 +205,181 @@ def mkdir_and_imwrite_selected_images_and_do_pytesseract():
         f.write('Ref\n')
         x, y, w, h = imagesToPrint[i]
         tmp_img = trueGray[y:y + h, x:x + w]
-        plotImg(tmp_img)
+        #plotImg(tmp_img)
         res = processImgtoText(tmp_img)
-        print('Res : \n' + res)
-        f.write(res+"\n")
+        for j in range(len(res)):
+            f.write(res[j][0:-2]+"\n")
         f.close()
         idxImagesToPrint = idxImagesToPrint + 1
-        # TODO - 2 - regarder le site car l'OCR basique ne marche pas tout le temps
-        # https://nanonets.com/blog/deep-learning-ocr/
+
+
+def unskew_the_image(img):
+    ThreshValue = 100
+    img2 = cv2.bitwise_not(img)
+    # plotImg(img2, "img2")
+    # from here image is black in background and light for the text
+    thresh = cv2.threshold(img2, ThreshValue, 255, cv2.THRESH_BINARY)[1]
+    # plotImg(thresh, "Thresh")
+    # grab the (x, y) coordinates of all pixel values that
+    # are greater than zero, then use these coordinates to
+    # compute a rotated bounding box that contains all
+    # coordinates
+    val = np.where(thresh > 0)
+    coords = np.column_stack([val[1], val[0]])
+    theRect = cv2.minAreaRect(coords)
+    # box = cv2.boxPoints(theRect)
+    # box = np.int0(box)
+    # cv2.drawContours(thresh, [box], 0, (255, 255, 255), 1)
+    angle = theRect[-1]
+    # rotate the image to deskew it
+    # if angle == 90:
+    #     angle = 0
+    #     plotImg(thresh)
+    #     box = cv2.boxPoints(theRect)
+    #     box = np.int0(box)
+    #     cv2.drawContours(thresh, [box], 0, (255, 255, 255), 1)
+    #     plotImg(thresh)
+    (h, w) = img.shape[:2]
+    center = (w // 2, h // 2)
+    M = cv2.getRotationMatrix2D(center, angle, 1.0)
+    rotated = cv2.warpAffine(img, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+    # print("[INFO] angle: {:.3f}".format(angle))
+    return rotated
+
+
+def drawMinAreaRect(img):
+    ThreshValue = 160
+    img = cv2.bitwise_not(img)
+    thresh = cv2.threshold(img, ThreshValue, 255, cv2.THRESH_BINARY)[1]
+    val = np.where(thresh > 0)
+    coords = np.column_stack([val[1], val[0]])
+    theRect = cv2.minAreaRect(coords)
+    box = cv2.boxPoints(theRect)
+    box = np.int0(box)
+    cv2.drawContours(thresh, [box], 0, (0, 0, 0), 1)
+    plotImg(thresh)
+
+
+class popupWindow(object):
+    def __init__(self,master):
+        top=self.top=Toplevel(master)
+        self.l=Label(top,text="Hello World")
+        self.l.pack()
+        self.e=Entry(top)
+        self.e.pack()
+        self.b=Button(top,text='Ok',command=self.cleanup)
+        self.b.pack()
+    def cleanup(self):
+        self.value=self.e.get()
+        self.top.destroy()
+
+
+class mainWindow(object):
+    def __init__(self,master):
+        self.master=master
+        self.b=Button(master,text="click me!",command=self.popup)
+        self.b.pack()
+        self.b2=Button(master,text="print value",command=lambda: sys.stdout.write(self.entryValue()+'\n'))
+        self.b2.pack()
+
+    def popup(self):
+        self.w=popupWindow(self.master)
+        self.b["state"] = "disabled"
+        self.master.wait_window(self.w.top)
+        self.b["state"] = "normal"
+
+    def entryValue(self):
+        return self.w.value
+
+
+def decideWhatToDoWithTheResults(txt_value_from_complete_ref_box, txt_value_single_letter_box, txt_value_from_all_ref_boxes_from_the_selected_sheet):
+    ref_from_complete_ref_box = txt_value_from_complete_ref_box[-4:]
+    ref_from_single_letter_box = txt_value_single_letter_box[-4:]
+    ref_from_all_ref_boxes_from_the_selected_sheet = txt_value_from_all_ref_boxes_from_the_selected_sheet[-4:]
+    #TODO - Warning ! Error when : e.g. S643 | 5643 | 5643 from args... but must not modify the global behaviour
+    if "#" in ref_from_complete_ref_box or "#" in ref_from_single_letter_box or "#" in ref_from_all_ref_boxes_from_the_selected_sheet \
+        or ref_from_complete_ref_box[0].isalpha() or ref_from_single_letter_box[0].isalpha() or ref_from_all_ref_boxes_from_the_selected_sheet[0].isalpha() :
+        if txt_value_from_complete_ref_box == txt_value_single_letter_box:
+            return txt_value_from_complete_ref_box
+        elif txt_value_from_complete_ref_box == txt_value_from_all_ref_boxes_from_the_selected_sheet:
+            return txt_value_from_complete_ref_box
+        elif txt_value_single_letter_box == txt_value_from_all_ref_boxes_from_the_selected_sheet:
+            return txt_value_single_letter_box
+        else:# All three disagree...
+            root = Tk()
+            m = mainWindow(root)
+            root.mainloop()
+            a=2
+    else:# ref with a letter first (or something else...)
+        if ref_from_complete_ref_box[0].isalpha() or ref_from_single_letter_box[0].isalpha() or ref_from_all_ref_boxes_from_the_selected_sheet[0].isalpha():
+            if ref_from_complete_ref_box[0].isalpha():# To continue...
+                return 'FUCK !'
+        else:
+            return "???"# Display everything because this is a mess ! :)
 
 
 def processImgtoText(img):
     minimumSizeOfARef = 10  # A02B-XXXX- = 10 char (4+1+4+1)
-    # Separate all of the text boxes for better reading of the OCR
-    d = pytesseract.image_to_data(img, output_type=Output.DICT)
+    padding_size = 10 # 10 pixels around text
+    img = cv2.GaussianBlur(img, (5, 5), 0)# test for better recognition of the reference
+    # plotImg(img, "the Blured Image")
+    # Separate all of the text boxes for better reading of the OCR || psm=11 not so bad || psm=12 perfect !
+
+    d = pytesseract.image_to_data(img, output_type=Output.DICT, config='--psm 12')
+    # uncomment for debugging
+    # n_boxes = len(d['level'])
+    # theImage = img.copy()
+    # for i in range(n_boxes):
+    #     (x, y, w, h) = (d['left'][i], d['top'][i], d['width'][i], d['height'][i])
+    #     cv2.rectangle(theImage, (x, y), (x + w, y + h), (0, 0, 0), 1)
+    # plotImg(theImage, "the Image with Boxes")
+
     n_boxes = len(d['level'])
     res = []
+    txt_value_from_all_ref_boxes_from_the_selected_sheet = ""
     for i in range(n_boxes):
+        # centers = []
         if d["text"][i] != "" and len(d["text"][i]) > minimumSizeOfARef:
+            txt_value_from_all_ref_boxes_from_the_selected_sheet = d["text"][i]
             (x, y, w, h) = (d['left'][i], d['top'][i], d['width'][i], d['height'][i])
-            my_tmp_img = img[y:y + h, x:x + w]
-            # Padding of the image for better results of the OCR
-            padding_size = 10
-            mytmp2 = cv2.copyMakeBorder(my_tmp_img, padding_size, padding_size, padding_size, padding_size,
-                                        cv2.BORDER_CONSTANT,
-                                        value=[255, 255, 255])
+            img_bordered = img[y:y + h, x:x + w]
 
-            tmp_img2 = cv2.GaussianBlur(mytmp2, (3, 3), 0)
-            #plotImg(tmp_img2, "tmp_img2")
-            res.append(pytesseract.image_to_string(tmp_img2, config='--oem 3 --psm 4'))
+            # Padding of the image for better results of the OCR
+            img_padded = cv2.copyMakeBorder(img_bordered, padding_size, padding_size, padding_size, padding_size,
+                                            cv2.BORDER_CONSTANT, value=[255, 255, 255])
+
+            # plotImg(img_padded)
+
+            #Unskew the text
+            img_unskewed = unskew_the_image(img_padded)
+            # plotImg(img_unskewed)
+
+            # From there image the text is straight
+
+            #Blur the image with a Gaussian filter of 5x5
+            img_unskewed_and_blured = cv2.GaussianBlur(img_unskewed, (5, 5), 0)
+
+            # In order to get another result for comparing
+            txt_value_single_letter_boxe = ""
+            boxes = pytesseract.image_to_boxes(img_unskewed_and_blured, config='--psm 10 --oem 1 -c tessedit_char_whitelist=#-ABEFHJRSMTKVNG0123456789')
+            for b in boxes.splitlines():
+                b = b.split(' ')
+                txt_value_single_letter_boxe = txt_value_single_letter_boxe + b[0]
+
+            # plotImg(tmp_img, "tmp_img")
+            # psm=13 ng | psm=8 ng | psm=7 good | psm=6 ng | psm=4 ng
+            txt_value_from_complete_ref_box = pytesseract.image_to_string(img_unskewed_and_blured, config='--psm 7 --oem 1 -c tessedit_char_whitelist=#-ABEFHJRSMTKVNG0123456789')
+            txt_value_from_complete_ref_box = txt_value_from_complete_ref_box.rstrip()
+            if txt_value_from_complete_ref_box != txt_value_single_letter_boxe \
+                or txt_value_single_letter_boxe != txt_value_from_all_ref_boxes_from_the_selected_sheet \
+                or txt_value_from_all_ref_boxes_from_the_selected_sheet != txt_value_from_complete_ref_box:
+                print("Différent ! : " + txt_value_from_complete_ref_box.rstrip() + " || " + txt_value_single_letter_boxe + " || " + txt_value_from_all_ref_boxes_from_the_selected_sheet)
+                txt_to_append = decideWhatToDoWithTheResults(txt_value_from_complete_ref_box, txt_value_single_letter_boxe, txt_value_from_all_ref_boxes_from_the_selected_sheet)
+            else:
+                txt_to_append = txt_value_from_complete_ref_box
+            res.append(txt_to_append)
     return res
+
 
 def extract_reference_and_create_excel_file():
     directory = "./Text"
