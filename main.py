@@ -19,12 +19,20 @@ from tkinter import *
 from tkinter import filedialog
 import pytesseract
 from pytesseract import Output
-import imutils
+from tkinter import ttk
 import shutil
+import re
 try:
     from PIL import Image, ImageTk
 except ImportError:
     import Image
+
+root = Tk()
+root.withdraw()
+selected_text = ""
+TextTab = []
+VariableTextSelected = tkinter.IntVar()
+UserInputText = tkinter.StringVar()
 
 
 def init_var():
@@ -147,7 +155,7 @@ def mkdir_and_imwrite_selected_images_and_do_pytesseract(images):
         # plotImg(tmp_img)
         res = processImgtoText(tmp_img)
         for j in range(len(res)):
-            f.write(res[j][0:-2]+"\n")
+            f.write(res[j]+"\n")
         f.close()
         idxImagesToPrint = idxImagesToPrint + 1
 
@@ -171,13 +179,13 @@ def unskew_the_image(img):
     # cv2.drawContours(thresh, [box], 0, (255, 255, 255), 1)
     angle = theRect[-1]
     # rotate the image to deskew it
-    if angle == 90:
-        angle = 0
-        plotImg(thresh, "angle à 90 deg")
-        box = cv2.boxPoints(theRect)
-        box = np.int0(box)
-        cv2.drawContours(thresh, [box], 0, (255, 255, 255), 1)
-        plotImg(thresh)
+    # if angle == 90:
+    #     angle = 0
+    #     plotImg(thresh, "angle à 90 deg")
+    #     box = cv2.boxPoints(theRect)
+    #     box = np.int0(box)
+    #     cv2.drawContours(thresh, [box], 0, (255, 255, 255), 1)
+    #     plotImg(thresh)
     (h, w) = img.shape[:2]
     center = (w // 2, h // 2)
     M = cv2.getRotationMatrix2D(center, angle, 1.0)
@@ -199,69 +207,102 @@ def drawMinAreaRect(img):
     plotImg(thresh)
 
 
+def exitTkinterWindow(root, keyword):
+    global selected_text, VariableTextSelected, TextTab
+    TextTab.append(keyword.get())
+    selected_text = TextTab[VariableTextSelected.get()]
+    root.quit()
+
+
 def decideWhatToDoWithTheResults(txt_value_from_complete_ref_box, txt_value_single_letter_box, txt_value_from_all_ref_boxes_from_the_selected_sheet, img):
-    #TODO - finish to do the logic with the interface
+    #TODO - Maybe test if there are 2 matches with the regex skip this part because it is okay ?
+    global selected_text, VariableTextSelected, root
+    root.deiconify()
 
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Tkinter works only with RGB and not BGR
+    TextTab.append(txt_value_from_complete_ref_box)
+    TextTab.append(txt_value_single_letter_box)
+    TextTab.append(txt_value_from_all_ref_boxes_from_the_selected_sheet)
 
-    root = Tk()
-    root.geometry("700x350")
+    root.geometry("800x600")
     root.title("Could user please confirm or change reference ?")
 
-    frame = tkinter.Frame(root)
+    #scoreTab = computeConfidenceScore(TextTab)
+    scoreTab = ["98", "85", "99"]
 
-    #Display image
+    # Display image
     imgtk = ImageTk.PhotoImage(master=root, image=Image.fromarray(img.copy()))
-    Label(root, image=imgtk).pack()
+    lbl = Label(root, image=imgtk).pack(padx=20, pady=20)
 
     # Display Text with tick box : txt_value_from_complete_ref_box
-    complete_ref_box = tkinter.StringVar()
-    complete_ref_box_check = tkinter.Checkbutton(
+    complete_ref_box_check = tkinter.Radiobutton(
         root,
-        text='txt_value_from_complete_ref_box ='+txt_value_from_complete_ref_box,
-        variable=complete_ref_box,
-        command=lambda: print(complete_ref_box.get()))
-    # complete_ref_box_check.grid(column=0, row=2, sticky=tkinter.W)
-    complete_ref_box_check.pack()
+        text=txt_value_from_complete_ref_box + " (" + scoreTab[0] + "%)",
+        variable=VariableTextSelected,
+        value=0)
+    complete_ref_box_check.config(font=("MS Sans Serif", 12))
+    complete_ref_box_check.pack(padx=20, pady=20)
 
     # Display Text with tick box : txt_value_single_letter_box
-    single_letter_box = tkinter.StringVar()
-    single_letter_box_check = tkinter.Checkbutton(
+    single_letter_box_check = tkinter.Radiobutton(
         root,
-        text='txt_value_single_letter_box = '+txt_value_single_letter_box,
-        variable=single_letter_box,
-        command=lambda: print(single_letter_box.get()))
-    # single_letter_box_check.grid(column=0, row=3, sticky=tkinter.W)
-    single_letter_box_check.pack()
+        text=txt_value_single_letter_box + " (" + scoreTab[1] + "%)",
+        variable=VariableTextSelected,
+        value=1)
+    single_letter_box_check.config(font=("MS Sans Serif", 12))
+    single_letter_box_check.pack(padx=20, pady=20)
 
     # Display Text with tick box : txt_value_from_all_ref_boxes_from_the_selected_sheet
-    ref_boxes_from_the_selected_sheet = tkinter.StringVar()
-    ref_boxes_from_the_selected_sheet_check = tkinter.Checkbutton(
+    ref_boxes_from_the_selected_sheet_check = tkinter.Radiobutton(
         root,
-        text='txt_value_from_all_ref_boxes_from_the_selected_sheet = '+txt_value_from_all_ref_boxes_from_the_selected_sheet,
-        variable=ref_boxes_from_the_selected_sheet,
-        command=lambda: print(ref_boxes_from_the_selected_sheet.get()))
-    # ref_boxes_from_the_selected_sheet_check.grid(column=0, row=4, sticky=tkinter.W)
-    ref_boxes_from_the_selected_sheet_check.pack()
+        text=txt_value_from_all_ref_boxes_from_the_selected_sheet + " (" + scoreTab[2] + "%)",
+        variable=VariableTextSelected,
+        value=2)
+    ref_boxes_from_the_selected_sheet_check.config(font=("MS Sans Serif", 12))
+    ref_boxes_from_the_selected_sheet_check.pack(padx=20, pady=20)
+
+    # Display Text with tick box : UserInputText
+    UserInputText = tkinter.Radiobutton(
+        root,
+        text='UserInputText = ',
+        variable=VariableTextSelected,
+        value=3)
+    UserInputText.pack(pady=(20, 0))
+    UserInputText.config(font=("MS Sans Serif", 12))
 
     # Enter txt if nothing is okay
-    Label(root, text='Please enter reference if nothing is correct regarding the above image').pack()
-    keyword = Entry(root, width=30)
-    keyword.focus()
-    # keyword.grid(column=1, row=5, sticky=tkinter.W)
-    keyword.pack()
+    keyword = Entry(root, width=20, font=("MS Sans Serif", 12), justify='center')
+    keyword.insert(0, txt_value_from_complete_ref_box)
+    keyword.pack(pady=(0, 20))
+
+    #Style of the button
+    style = ttk.Style()
+    style.configure('W.TButton', font=('calibri', 10, 'bold', 'underline'), justify='center')
 
     # Click on Button to exit after choice has been made
-    tkinter.Button(root,
-                   text='Next',
-                   command=root.quit
-                   ).pack()
+    btn = ttk.Button(root,
+               text='Next',
+               style='W.TButton',
+               command=lambda: exitTkinterWindow(root, keyword)
+               ).pack(pady=40, padx=20, ipadx=18, ipady=30)
 
-    res = root.mainloop()
+    root.mainloop()
+
+    # Start again with fresh ref
+    TextTab.clear()
+    for widget in root.winfo_children():
+       widget.destroy()
+    root.withdraw()
+
+    return selected_text
 
 
-
-    return ""
+def computeConfidenceScore(TextTab): # TODO - Compute a score of matching
+    refNumRegex = re.compile(r'^[A-Z]\d\d[A-Z]-\d\d\d\d-[A-Z]\d\d\d')
+    refWithDieseRegex = re.compile(r'^[A-Z]\d\d[A-Z]-\d\d\d\d-[A-Z]\d\d\d[#]....')
+    for txt in TextTab:
+        a=2
+    return []
 
 
 def processImgtoText(img):
@@ -272,7 +313,7 @@ def processImgtoText(img):
                                     cv2.BORDER_CONSTANT, value=[255, 255, 255])
     img = cv2.GaussianBlur(img, (3, 3), 0)
     # test for better recognition of the reference
-    plotImg(img, "the Blured Padded Image")
+    # plotImg(img, "the Blured Padded Image")
 
     # Separate all of the text boxes for better reading of the OCR || psm=11 not so bad || psm=12 perfect !
     d = pytesseract.image_to_data(img, output_type=Output.DICT, config='--psm 12')
@@ -373,7 +414,6 @@ if __name__ == '__main__':
     init_var()
     for i in range(len(pages)):
         images = select_boxes_in_the_png_file(pages[i])
-        decideWhatToDoWithTheResults("A02B-0327-H010", "AQ2B-0327-H010", "A02B-0327~H010", images[0])
         # Récupérer le pointeur de la souris et trouver le contour le plus près suite à click sur l'image ?
         # select_box_by_click(img, trueContours)
 
