@@ -21,7 +21,7 @@ import pytesseract
 from pytesseract import Output
 from tkinter import ttk
 import shutil
-import re
+import regex
 try:
     from PIL import Image, ImageTk
 except ImportError:
@@ -217,6 +217,9 @@ def exitTkinterWindow(root, keyword):
 def decideWhatToDoWithTheResults(txt_value_from_complete_ref_box, txt_value_single_letter_box, txt_value_from_all_ref_boxes_from_the_selected_sheet, img):
     #TODO - Maybe test if there are 2 matches with the regex skip this part because it is okay ?
     global selected_text, VariableTextSelected, root
+
+    scoreTab = computeConfidenceScore(TextTab)
+
     root.deiconify()
 
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Tkinter works only with RGB and not BGR
@@ -227,9 +230,6 @@ def decideWhatToDoWithTheResults(txt_value_from_complete_ref_box, txt_value_sing
     root.geometry("800x600")
     root.title("Could user please confirm or change reference ?")
 
-    #scoreTab = computeConfidenceScore(TextTab)
-    scoreTab = ["98", "85", "99"]
-
     # Display image
     imgtk = ImageTk.PhotoImage(master=root, image=Image.fromarray(img.copy()))
     lbl = Label(root, image=imgtk).pack(padx=20, pady=20)
@@ -237,7 +237,7 @@ def decideWhatToDoWithTheResults(txt_value_from_complete_ref_box, txt_value_sing
     # Display Text with tick box : txt_value_from_complete_ref_box
     complete_ref_box_check = tkinter.Radiobutton(
         root,
-        text=txt_value_from_complete_ref_box + " (" + scoreTab[0] + "%)",
+        text=txt_value_from_complete_ref_box + " (match approx." + scoreTab[0] + "%)",
         variable=VariableTextSelected,
         value=0)
     complete_ref_box_check.config(font=("MS Sans Serif", 12))
@@ -246,7 +246,7 @@ def decideWhatToDoWithTheResults(txt_value_from_complete_ref_box, txt_value_sing
     # Display Text with tick box : txt_value_single_letter_box
     single_letter_box_check = tkinter.Radiobutton(
         root,
-        text=txt_value_single_letter_box + " (" + scoreTab[1] + "%)",
+        text=txt_value_single_letter_box + " (match approx." + scoreTab[1] + "%)",
         variable=VariableTextSelected,
         value=1)
     single_letter_box_check.config(font=("MS Sans Serif", 12))
@@ -255,7 +255,7 @@ def decideWhatToDoWithTheResults(txt_value_from_complete_ref_box, txt_value_sing
     # Display Text with tick box : txt_value_from_all_ref_boxes_from_the_selected_sheet
     ref_boxes_from_the_selected_sheet_check = tkinter.Radiobutton(
         root,
-        text=txt_value_from_all_ref_boxes_from_the_selected_sheet + " (" + scoreTab[2] + "%)",
+        text=txt_value_from_all_ref_boxes_from_the_selected_sheet + " (match approx." + scoreTab[2] + "%)",
         variable=VariableTextSelected,
         value=2)
     ref_boxes_from_the_selected_sheet_check.config(font=("MS Sans Serif", 12))
@@ -297,12 +297,25 @@ def decideWhatToDoWithTheResults(txt_value_from_complete_ref_box, txt_value_sing
     return selected_text
 
 
-def computeConfidenceScore(TextTab): # TODO - Compute a score of matching
-    refNumRegex = re.compile(r'^[A-Z]\d\d[A-Z]-\d\d\d\d-[A-Z]\d\d\d')
-    refWithDieseRegex = re.compile(r'^[A-Z]\d\d[A-Z]-\d\d\d\d-[A-Z]\d\d\d[#]....')
+def computeConfidenceScore(TextTab):
+    refNum_Regex = regex.compile('(^A0[0-9]B[-]0[0-9][0-9][0-9][-][A-Z][0-9][0-9][0-9]){i,s,d}')
+    refWithDiese4_Regex = regex.compile('(^A0[0-9]B[-]0[0-9][0-9][0-9][-][A-Z][0-9][0-9][0-9][#]....){i,s,d}')
+    refWithDiese3_Regex = regex.compile('(^A0[0-9]B[-]0[0-9][0-9][0-9][-][A-Z][0-9][0-9][0-9][#]...){i,s,d}')
+    refWithDiese2_Regex = regex.compile('(^A0[0-9]B[-]0[0-9][0-9][0-9][-][A-Z][0-9][0-9][0-9][#]..){i,s,d}')
+    refWithDiese1_Regex = regex.compile('(^A0[0-9]B[-]0[0-9][0-9][0-9][-][A-Z][0-9][0-9][0-9][#].){i,s,d}')
+    confidenceScore = []
     for txt in TextTab:
-        a=2
-    return []
+        if txt != "":
+            (i1, s1, d1) = regex.fullmatch(refWithDiese1_Regex, txt).fuzzy_counts
+            (i2, s2, d2) = regex.fullmatch(refWithDiese2_Regex, txt).fuzzy_counts
+            (i3, s3, d3) = regex.fullmatch(refWithDiese3_Regex, txt).fuzzy_counts
+            (i4, s4, d4) = regex.fullmatch(refWithDiese4_Regex, txt).fuzzy_counts
+            (i5, s5, d5) = regex.fullmatch(refNum_Regex, txt).fuzzy_counts
+            best_match = min(min(min(min(i1+s1+d1,i2+s2+d2), i3+s3+d3), s4+i4+d4), s5+i5+d5)
+            confidenceScore.append(str(int(100*(1-best_match/len(txt)))))
+        else:
+            confidenceScore.append("NaN")
+    return confidenceScore
 
 
 def processImgtoText(img):
