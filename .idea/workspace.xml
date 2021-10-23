@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="9d7e6a39-e9b0-4af0-9612-6c6751fc9956" name="Changes" comment="V2.1.0 : &#10;--&gt; Tkinter for confirmation of the user when mismatching of ref is okay&#10;--&gt; TODO : compute score (0-100%) between regex and the three strings&#10;--&gt; TODO : if 2 strings agree at 100% skip the tkinter part">
+    <list default="true" id="9d7e6a39-e9b0-4af0-9612-6c6751fc9956" name="Changes" comment="V2.2.0 : &#10;--&gt; TODO : improve the detection of text with pytesseract">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Results.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/Results.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -129,7 +126,14 @@
       <option name="project" value="LOCAL" />
       <updated>1634767933662</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="V2.2.0 : &#10;--&gt; TODO : improve the detection of text with pytesseract">
+      <created>1634856239603</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1634856239603</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -150,7 +154,8 @@
     <MESSAGE value="Last version with OCR improvement" />
     <MESSAGE value="V2.0.0 : &#10;--&gt; ROI selection&#10;--&gt; Tkinter Interface when text is not correctly detected&#10;--&gt; Improvement of the results of Tesseract because of manipulation of the dpi &amp; resolution" />
     <MESSAGE value="V2.1.0 : &#10;--&gt; Tkinter for confirmation of the user when mismatching of ref is okay&#10;--&gt; TODO : compute score (0-100%) between regex and the three strings&#10;--&gt; TODO : if 2 strings agree at 100% skip the tkinter part" />
-    <option name="LAST_COMMIT_MESSAGE" value="V2.1.0 : &#10;--&gt; Tkinter for confirmation of the user when mismatching of ref is okay&#10;--&gt; TODO : compute score (0-100%) between regex and the three strings&#10;--&gt; TODO : if 2 strings agree at 100% skip the tkinter part" />
+    <MESSAGE value="V2.2.0 : &#10;--&gt; TODO : improve the detection of text with pytesseract" />
+    <option name="LAST_COMMIT_MESSAGE" value="V2.2.0 : &#10;--&gt; TODO : improve the detection of text with pytesseract" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
