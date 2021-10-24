@@ -5,7 +5,6 @@
 # DBM - 200 dpi seems optimum & letters might have a font size of 30-33 (pixels) regarding the litterature
 # DBM - Python v=3.7 (venv)
 # https://groups.google.com/g/tesseract-ocr/c/Wdh_JJwnw94/m/24JHDYQbBQAJ
-# DBM -
 
 import os
 from pdf2image import convert_from_path

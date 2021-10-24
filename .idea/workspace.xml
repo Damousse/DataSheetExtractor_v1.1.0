@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="9d7e6a39-e9b0-4af0-9612-6c6751fc9956" name="Changes" comment="v2.2.0 :&#10;TO DO : finish the decision part and improve letter detection">
+    <list default="true" id="9d7e6a39-e9b0-4af0-9612-6c6751fc9956" name="Changes" comment="v3.0.0 : work from A to Z&#10;--&gt; TODO : next steps is to then Read the Assembly list option">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Results.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/Results.xlsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -142,7 +141,14 @@
       <option name="project" value="LOCAL" />
       <updated>1635090391980</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="v3.0.0 : work from A to Z&#10;--&gt; TODO : next steps is to then Read the Assembly list option">
+      <created>1635094814837</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1635094814837</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -165,7 +171,8 @@
     <MESSAGE value="V2.1.0 : &#10;--&gt; Tkinter for confirmation of the user when mismatching of ref is okay&#10;--&gt; TODO : compute score (0-100%) between regex and the three strings&#10;--&gt; TODO : if 2 strings agree at 100% skip the tkinter part" />
     <MESSAGE value="V2.2.0 : &#10;--&gt; TODO : improve the detection of text with pytesseract" />
     <MESSAGE value="v2.2.0 :&#10;TO DO : finish the decision part and improve letter detection" />
-    <option name="LAST_COMMIT_MESSAGE" value="v2.2.0 :&#10;TO DO : finish the decision part and improve letter detection" />
+    <MESSAGE value="v3.0.0 : work from A to Z&#10;--&gt; TODO : next steps is to then Read the Assembly list option" />
+    <option name="LAST_COMMIT_MESSAGE" value="v3.0.0 : work from A to Z&#10;--&gt; TODO : next steps is to then Read the Assembly list option" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
