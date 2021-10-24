@@ -152,22 +152,22 @@ def mouse(event, x, y, flags, param):
 
     if event == cv2.EVENT_LBUTTONDOWN:
         if drawing_state == 0:
-            p0 = x, y
+            p0 = [x, y]
             drawing_state = 1
         elif drawing_state == 1:
-            p1 = x, y
+            p1 = [x, y]
             cv2.line(ImageforROI, p0, p1, (0, 255, 0), 2)
             points.append(p0)
             drawing_state = 2
         elif drawing_state == 2:
-            p2 = x, y
+            p2 = [x, y]
             cv2.line(ImageforROI, p1, p2, (0, 255, 0), 2)
-            points.append([p1])
+            points.append(p1)
             drawing_state = 3
         elif drawing_state == 3:
-            p3 = x, y
+            p3 = [x, y]
             cv2.line(ImageforROI, p2, p3, (0, 255, 0), 2)
-            points.append([p2])
+            points.append(p2)
             drawing_state = 4
 
     elif event == cv2.EVENT_RBUTTONDOWN:
@@ -177,17 +177,27 @@ def mouse(event, x, y, flags, param):
     elif event == cv2.EVENT_LBUTTONUP:
         if drawing_state == 4:
             cv2.line(ImageforROI, p3, p0, (0, 255, 0), 2)
-            points.append([p3])
+            points.append(p3)
             drawing_state = 0
             regions = constructRegionsFromPoints(points)
 
 
 def constructRegionsFromPoints(points):
-    theRect = cv2.minAreaRect(points)
-    box = cv2.boxPoints(theRect)
-    box = np.int0(box)
-    cv2.drawContours(thresh, [box], 0, (0, 255, 255), 1)
-    return box
+    points = np.array(points)
+    #y_axis_sorted_box = points[points[:, 1].argsort()]
+    #tmp_top = np.array([y_axis_sorted_box[0], y_axis_sorted_box[1]])
+    #tmp_bottom = np.array([y_axis_sorted_box[-2], y_axis_sorted_box[-1]])
+    #(top_left, top_right) = tmp_top[tmp_top[:, 0].argsort()]
+    #(bottom_left, bottom_right) = tmp_bottom[tmp_bottom[:, 0].argsort()]
+    # TODO : extract the correct region from original image with the polygon shape from points
+    # TODO : Maybe do a mask over ImageForROI in order to extract zone then compute the minrectArea
+    mask = np.zeros(ImageforROI.shape[:2], dtype="uint8")
+    cv2.fillPoly(mask, pts=[points], color=(255, 255, 255))
+    masked = cv2.bitwise_and(ImageforROI, ImageforROI, mask=mask)
+    plotImg(masked, "Masked Image")
+    # need to extract the region from original image and then mask the imahe with a white rectangular background
+    return []
+
 
 def select_boxes_in_the_png_file(png_file):
     directoryPagesFromPdfFile = os.path.join(os.getcwd(), 'PagesFromPdfFile')
