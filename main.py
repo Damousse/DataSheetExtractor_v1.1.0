@@ -22,6 +22,7 @@ from pytesseract import Output
 from tkinter import ttk
 import shutil
 import regex
+import math
 try:
     from PIL import Image, ImageTk
 except ImportError:
@@ -101,13 +102,11 @@ def ifFolderExistsDeleteAllFilesFromIt(folderName):
     os.mkdir(pathOfFolder)
 
 
-# it is working
 def selectROI(tmp):
     fromCenter = False
     showCrosshair = True
     regions = []
     h, w = tmp.shape[:2]
-    # ratio = h_final/775
     ratio = int(h/900)
     tmp2 = cv2.resize(tmp, (int(w/ratio), int(h/ratio)))
     while True:
@@ -160,6 +159,20 @@ def mkdir_and_imwrite_selected_images_and_do_pytesseract(images):
         idxImagesToPrint = idxImagesToPrint + 1
 
 
+def computeAngle(box):
+    y_axis_sorted_box = box[box[:, 1].argsort()]
+    # tmp_top = np.array([y_axis_sorted_box[0], y_axis_sorted_box[1]])
+    tmp_bottom = np.array([y_axis_sorted_box[-2], y_axis_sorted_box[-1]])
+    # (top_left, top_right) = tmp_top[tmp_top[:, 0].argsort()]
+    (bottom_left, bottom_right) = tmp_bottom[tmp_bottom[:, 0].argsort()]
+
+    angle = math.atan(math.fabs(bottom_left[1]-bottom_right[1])/math.fabs(bottom_left[0]-bottom_right[0]))*180/math.pi
+    if bottom_left[1] > bottom_right[1]:# pente positive
+        angle = - angle
+
+    return angle
+
+
 def unskew_the_image(img):
     ThreshValue = 150
     img2 = cv2.bitwise_not(img)
@@ -167,28 +180,19 @@ def unskew_the_image(img):
     # from here image is black in background and light for the text
     thresh = cv2.threshold(img2, ThreshValue, 255, cv2.THRESH_BINARY)[1]
     # plotImg(thresh, "Thresh")
-    # grab the (x, y) coordinates of all pixel values that
-    # are greater than zero, then use these coordinates to
-    # compute a rotated bounding box that contains all
-    # coordinates
     val = np.where(thresh > 0)
     coords = np.column_stack([val[1], val[0]])
     theRect = cv2.minAreaRect(coords)
-    # box = cv2.boxPoints(theRect)
-    # box = np.int0(box)
+    box = cv2.boxPoints(theRect)
+    box = np.int0(box)
     # cv2.drawContours(thresh, [box], 0, (255, 255, 255), 1)
-    angle = theRect[-1]
+    # plotImg(thresh)
+    angle = computeAngle(box)
     # rotate the image to deskew it
-    # if angle == 90:
-    #     angle = 0
-    #     plotImg(thresh, "angle à 90 deg")
-    #     box = cv2.boxPoints(theRect)
-    #     box = np.int0(box)
-    #     cv2.drawContours(thresh, [box], 0, (255, 255, 255), 1)
-    #     plotImg(thresh)
     (h, w) = img.shape[:2]
     center = (w // 2, h // 2)
-    M = cv2.getRotationMatrix2D(center, angle, 1.0)
+    #rotate the image of "angle" in counterclockwise way
+    M = cv2.getRotationMatrix2D(center, angle, 1)
     rotated = cv2.warpAffine(img, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
     # print("[INFO] angle: {:.3f}".format(angle))
     return rotated
@@ -204,7 +208,7 @@ def drawMinAreaRect(img):
     box = cv2.boxPoints(theRect)
     box = np.int0(box)
     cv2.drawContours(thresh, [box], 0, (0, 0, 0), 1)
-    plotImg(thresh)
+    # plotImg(thresh)
 
 
 def exitTkinterWindow(root, keyword):
@@ -218,14 +222,13 @@ def decideWhatToDoWithTheResults(txt_value_from_complete_ref_box, txt_value_sing
     #TODO - Maybe test if there are 2 matches with the regex skip this part because it is okay ?
     global selected_text, VariableTextSelected, root
 
-    scoreTab = computeConfidenceScore(TextTab)
-
-    root.deiconify()
-
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Tkinter works only with RGB and not BGR
     TextTab.append(txt_value_from_complete_ref_box)
     TextTab.append(txt_value_single_letter_box)
     TextTab.append(txt_value_from_all_ref_boxes_from_the_selected_sheet)
+    scoreTab = computeConfidenceScore(TextTab)
+
+    root.deiconify()
 
     root.geometry("800x600")
     root.title("Could user please confirm or change reference ?")
@@ -318,24 +321,26 @@ def computeConfidenceScore(TextTab):
     return confidenceScore
 
 
-def processImgtoText(img):
+def processImgtoText(myImg):
     minimumSizeOfARef = 10  # A02B-XXXX- = 10 char (4+1+4+1)
     padding_size = 20 # 15 pixels around text
 
-    img = cv2.copyMakeBorder(img, padding_size, padding_size, padding_size, padding_size,
+    myImg = cv2.copyMakeBorder(myImg, padding_size, padding_size, padding_size, padding_size,
                                     cv2.BORDER_CONSTANT, value=[255, 255, 255])
-    img = cv2.GaussianBlur(img, (3, 3), 0)
-    # test for better recognition of the reference
-    # plotImg(img, "the Blured Padded Image")
+    myImg = cv2.GaussianBlur(myImg, (3, 3), 0)
+
+    myImg = unskew_the_image(myImg)
+
+    # plotImg(myImg, "the Blured Padded Unskewed Image")
 
     # Separate all of the text boxes for better reading of the OCR || psm=11 not so bad || psm=12 perfect !
-    d = pytesseract.image_to_data(img, output_type=Output.DICT, config='--psm 12')
+    d = pytesseract.image_to_data(myImg, output_type=Output.DICT, config='--psm 12')
     # uncomment for debugging
-    n_boxes = len(d['level'])
-    theImage = img.copy()
-    for i in range(n_boxes):
-        (x, y, w, h) = (d['left'][i], d['top'][i], d['width'][i], d['height'][i])
-        cv2.rectangle(theImage, (x, y), (x + w, y + h), (0, 0, 0), 1)
+    # n_boxes = len(d['level'])
+    # theImage = myImg.copy()
+    # for i in range(n_boxes):
+        # (x, y, w, h) = (d['left'][i], d['top'][i], d['width'][i], d['height'][i])
+        # cv2.rectangle(theImage, (x, y), (x + w, y + h), (0, 0, 0), 1)
     # plotImg(theImage, "the Image with Boxes")
 
     n_boxes = len(d['level'])
@@ -346,7 +351,7 @@ def processImgtoText(img):
         if d["text"][i] != "" and len(d["text"][i]) > minimumSizeOfARef:
             txt_value_from_all_ref_boxes_from_the_selected_sheet = d["text"][i]
             (x, y, w, h) = (d['left'][i], d['top'][i], d['width'][i], d['height'][i])
-            img_bordered = img[y:y + h, x:x + w]
+            img_bordered = myImg[y:y + h, x:x + w]
 
             # Padding of the image for better results of the OCR
             img_padded = cv2.copyMakeBorder(img_bordered, padding_size, padding_size, padding_size, padding_size,
@@ -356,12 +361,12 @@ def processImgtoText(img):
 
             # Unskew the text
             img_padded_and_unskewed = unskew_the_image(img_padded)
-            # plotImg(img, "Unskewed")
+            # plotImg(img_padded_and_unskewed, "Unskewed")
             # From there image the text is straight
 
             #Blur the image with a Gaussian filter of 5x5
             img_unskewed_and_blured = cv2.GaussianBlur(img_padded_and_unskewed, (3, 3), 0)
-
+            # plotImg(img_unskewed_and_blured, "img_unskewed_and_blured")
             # In order to get another result for comparing
             txt_value_single_letter_box = ""
             # psm=10 treat image as a single char
@@ -370,14 +375,12 @@ def processImgtoText(img):
                 b = b.split(' ')
                 txt_value_single_letter_box = txt_value_single_letter_box + b[0]
 
-            # plotImg(tmp_img, "tmp_img")
             txt_to_append = ""
             # psm=13 ng | psm=8 ng | psm=7 good | psm=6 ng | psm=4 ng
             txt_value_from_complete_ref_box = pytesseract.image_to_string(img_unskewed_and_blured, config='--psm 7 --oem 1 -c tessedit_char_whitelist=#-ABEFHJRSMTKVNG0123456789')
             txt_value_from_complete_ref_box = txt_value_from_complete_ref_box.rstrip()
             if txt_value_from_complete_ref_box != txt_value_single_letter_box \
-                or txt_value_single_letter_box != txt_value_from_all_ref_boxes_from_the_selected_sheet \
-                or txt_value_from_all_ref_boxes_from_the_selected_sheet != txt_value_from_complete_ref_box:
+                or txt_value_single_letter_box != txt_value_from_all_ref_boxes_from_the_selected_sheet:
                 print("Différent ! : " + txt_value_from_complete_ref_box.rstrip() + " || " + txt_value_single_letter_box + " || " + txt_value_from_all_ref_boxes_from_the_selected_sheet)
                 txt_to_append = decideWhatToDoWithTheResults(txt_value_from_complete_ref_box,
                                                              txt_value_single_letter_box,
@@ -427,11 +430,8 @@ if __name__ == '__main__':
     init_var()
     for i in range(len(pages)):
         images = select_boxes_in_the_png_file(pages[i])
-        # Récupérer le pointeur de la souris et trouver le contour le plus près suite à click sur l'image ?
-        # select_box_by_click(img, trueContours)
 
-        # imagesToPrint containt the rectangle for image analysis
-        # Do also pytesseract
+        # imagesToPrint containt the rectangle for image analysis and do also pytesseract
         mkdir_and_imwrite_selected_images_and_do_pytesseract(images)
 
         imagesToPrint.clear()

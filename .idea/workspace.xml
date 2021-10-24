@@ -2,7 +2,15 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="9d7e6a39-e9b0-4af0-9612-6c6751fc9956" name="Changes" comment="V2.2.0 : &#10;--&gt; TODO : improve the detection of text with pytesseract">
+      <change afterPath="$PROJECT_DIR$/old_versions/1-Convert_PDF_to_Images_PNG.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/old_versions/2-Convert_PDF_to_Several_Separated_Boxes.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/old_versions/3-Convert_PDF_to_Several_Separated_Boxes_And_Can_Select_Boxes_With_Colors_Changes_When_Right_Clicking.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/old_versions/4-ConvertPDF_to_Excel_With_OCR.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/DataSheetExtract.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/DataSheetExtract.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Results.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/Results.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -46,7 +54,7 @@
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
-      <option name="SDK_HOME" value="C:\Users\94000187\Documents\FANUC\source\PycharmProjects\DataSheetExtractor\venv\Scripts\python.exe" />
+      <option name="SDK_HOME" value="C:\Users\Damien\Documents\GitHub\DataSheetExtractor_v1.1.0\venv\Scripts\python.exe" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
