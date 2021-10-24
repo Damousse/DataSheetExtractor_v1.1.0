@@ -219,7 +219,6 @@ def exitTkinterWindow(root, keyword):
 
 
 def decideWhatToDoWithTheResults(txt_value_from_complete_ref_box, txt_value_single_letter_box, txt_value_from_all_ref_boxes_from_the_selected_sheet, img):
-    #TODO - Maybe test if there are 2 matches with the regex skip this part because it is okay ?
     global selected_text, VariableTextSelected, root
 
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Tkinter works only with RGB and not BGR
@@ -315,6 +314,10 @@ def computeConfidenceScore(TextTab):
             (i4, s4, d4) = regex.fullmatch(refWithDiese4_Regex, txt).fuzzy_counts
             (i5, s5, d5) = regex.fullmatch(refNum_Regex, txt).fuzzy_counts
             best_match = min(min(min(min(i1+s1+d1,i2+s2+d2), i3+s3+d3), s4+i4+d4), s5+i5+d5)
+            if best_match < 0:
+                best_match = 0
+            elif best_match > 100:
+                best_match = 100
             confidenceScore.append(str(int(100*(1-best_match/len(txt)))))
         else:
             confidenceScore.append("NaN")
@@ -369,11 +372,18 @@ def processImgtoText(myImg):
             # plotImg(img_unskewed_and_blured, "img_unskewed_and_blured")
             # In order to get another result for comparing
             txt_value_single_letter_box = ""
+
             # psm=10 treat image as a single char
-            boxes = pytesseract.image_to_boxes(img_unskewed_and_blured, config='--psm 10 --oem 1 -c tessedit_char_whitelist=#-ABEFHJRSMTKVNG0123456789')
+            # boxes = pytesseract.image_to_boxes(img_unskewed_and_blured, config='--psm 10 --oem 1 -c tessedit_char_whitelist=#-ABEFHJRSMTKVNG0123456789')
+            boxes = pytesseract.image_to_boxes(img_unskewed_and_blured)
+            theImage2 = img_unskewed_and_blured.copy()
+            theImage2 = cv2.adaptiveThreshold(theImage2, 170, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY, 11, 2)
+            height, width = theImage2.shape  # assumes color image
             for b in boxes.splitlines():
                 b = b.split(' ')
+                theImage2 = cv2.rectangle(theImage2, (int(b[1]), height - int(b[2])), (int(b[3]), height - int(b[4])), (0, 255, 0), 1)
                 txt_value_single_letter_box = txt_value_single_letter_box + b[0]
+            plotImg(theImage2, "the Image with Letter Boxes")
 
             txt_to_append = ""
             # psm=13 ng | psm=8 ng | psm=7 good | psm=6 ng | psm=4 ng
@@ -381,11 +391,11 @@ def processImgtoText(myImg):
             txt_value_from_complete_ref_box = txt_value_from_complete_ref_box.rstrip()
             if txt_value_from_complete_ref_box != txt_value_single_letter_box \
                 or txt_value_single_letter_box != txt_value_from_all_ref_boxes_from_the_selected_sheet:
-                print("Différent ! : " + txt_value_from_complete_ref_box.rstrip() + " || " + txt_value_single_letter_box + " || " + txt_value_from_all_ref_boxes_from_the_selected_sheet)
+                print("Différent ! : " + txt_value_from_complete_ref_box + " || " + txt_value_single_letter_box + " || " + txt_value_from_all_ref_boxes_from_the_selected_sheet)
                 txt_to_append = decideWhatToDoWithTheResults(txt_value_from_complete_ref_box,
                                                              txt_value_single_letter_box,
                                                              txt_value_from_all_ref_boxes_from_the_selected_sheet,
-                                                             img_bordered)
+                                                             img_padded_and_unskewed)
             else:
                 txt_to_append = txt_value_from_complete_ref_box
             res.append(txt_to_append)
@@ -429,6 +439,9 @@ if __name__ == '__main__':
     pages = convert_from_path(getPdfFile(), dpi=300)
     init_var()
     for i in range(len(pages)):
+        # pdf = pytesseract.image_to_pdf_or_hocr(pages[i], extension='pdf')
+        # with open('test.pdf', 'w+b') as f:
+            # f.write(pdf)  # pdf type is bytes by default
         images = select_boxes_in_the_png_file(pages[i])
 
         # imagesToPrint containt the rectangle for image analysis and do also pytesseract
