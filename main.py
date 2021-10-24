@@ -31,6 +31,14 @@ root = Tk()
 root.withdraw()
 selected_text = ""
 TextTab = []
+ImageforROI = []
+drawing_state = 0
+p0 = (0,0)
+p1 = (0,0)
+p2 = (0,0)
+p3 = (0,0)
+points = []
+regions = []
 VariableTextSelected = tkinter.IntVar()
 UserInputText = tkinter.StringVar()
 
@@ -101,7 +109,7 @@ def ifFolderExistsDeleteAllFilesFromIt(folderName):
     os.mkdir(pathOfFolder)
 
 
-def selectROI(tmp):
+def selectROI_old(tmp):
     fromCenter = False
     showCrosshair = True
     regions = []
@@ -121,6 +129,65 @@ def selectROI(tmp):
         # plotImg(r)
     return regions
 
+
+def selectROI(tmp):
+    global ImageforROI
+    title = 'ROI Selector'
+    h, w = tmp.shape[:2]
+    ratio = int(h / 900)
+    ImageforROI = cv2.resize(tmp, (int(w / ratio), int(h / ratio)))
+    cv2.namedWindow(title)
+    cv2.setMouseCallback(title, mouse)
+    while True:
+        cv2.imshow(title, ImageforROI)
+        k = cv2.waitKey(1) & 0xFF
+        if k == 27:
+            break
+
+    return regions
+
+
+def mouse(event, x, y, flags, param):
+    global p0, p1, p2, p3, drawing_state, ImageforROI, points, regions
+
+    if event == cv2.EVENT_LBUTTONDOWN:
+        if drawing_state == 0:
+            p0 = x, y
+            drawing_state = 1
+        elif drawing_state == 1:
+            p1 = x, y
+            cv2.line(ImageforROI, p0, p1, (0, 255, 0), 2)
+            points.append(p0)
+            drawing_state = 2
+        elif drawing_state == 2:
+            p2 = x, y
+            cv2.line(ImageforROI, p1, p2, (0, 255, 0), 2)
+            points.append([p1])
+            drawing_state = 3
+        elif drawing_state == 3:
+            p3 = x, y
+            cv2.line(ImageforROI, p2, p3, (0, 255, 0), 2)
+            points.append([p2])
+            drawing_state = 4
+
+    elif event == cv2.EVENT_RBUTTONDOWN:
+        points.clear()
+        drawing_state = 0
+
+    elif event == cv2.EVENT_LBUTTONUP:
+        if drawing_state == 4:
+            cv2.line(ImageforROI, p3, p0, (0, 255, 0), 2)
+            points.append([p3])
+            drawing_state = 0
+            regions = constructRegionsFromPoints(points)
+
+
+def constructRegionsFromPoints(points):
+    theRect = cv2.minAreaRect(points)
+    box = cv2.boxPoints(theRect)
+    box = np.int0(box)
+    cv2.drawContours(thresh, [box], 0, (0, 255, 255), 1)
+    return box
 
 def select_boxes_in_the_png_file(png_file):
     directoryPagesFromPdfFile = os.path.join(os.getcwd(), 'PagesFromPdfFile')
