@@ -5,7 +5,7 @@ block_cipher = None
 
 
 a = Analysis(['main.py'],
-             pathex=['C:\\Users\\94000187\\Documents\\FANUC\\source\\PycharmProjects\\DataSheetExtract'],
+             pathex=['C:\\Users\\Damien\\Documents\\GitHub\\DataSheetExtractor_v1.1.0'],
              binaries=[],
              datas=[],
              hiddenimports=[],

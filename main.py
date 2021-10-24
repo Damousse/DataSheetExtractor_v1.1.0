@@ -25,7 +25,7 @@ import math
 try:
     from PIL import Image, ImageTk
 except ImportError:
-    import Image
+    import Image, ImageTk
 
 root = Tk()
 root.withdraw()
