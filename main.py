@@ -22,6 +22,7 @@ from tkinter import ttk
 import shutil
 import regex
 import math
+
 try:
     from PIL import Image, ImageTk
 except ImportError:
@@ -33,12 +34,12 @@ selected_text = ""
 TextTab = []
 ImageforROI = []
 drawing_state = 0
-p0 = (0,0)
-p1 = (0,0)
-p2 = (0,0)
-p3 = (0,0)
+p0 = (0, 0)
+p1 = (0, 0)
+p2 = (0, 0)
+p3 = (0, 0)
 points = []
-regions = []
+regions_in_selection = []
 VariableTextSelected = tkinter.IntVar()
 UserInputText = tkinter.StringVar()
 
@@ -114,24 +115,26 @@ def selectROI_old(tmp):
     showCrosshair = True
     regions = []
     h, w = tmp.shape[:2]
-    ratio = int(h/900)
-    tmp2 = cv2.resize(tmp, (int(w/ratio), int(h/ratio)))
+    ratio = int(h / 900)
+    tmp2 = cv2.resize(tmp, (int(w / ratio), int(h / ratio)))
     while True:
         ROI = cv2.selectROI('Selector', tmp2, showCrosshair, fromCenter)
         (x, y, w, h) = ROI
         cv2.rectangle(tmp2, (x, y), (x + w, y + h), (0, 255, 0), 2)
         regions.append(tmp[int(ratio * y):int(ratio * (y + h)), int(ratio * x):int(ratio * (x + w))])
-        if(ROI[0] == ROI[1]  == ROI[2] == ROI[3] == 0):
+        if ROI[0] == ROI[1] == ROI[2] == ROI[3] == 0:
             break
-    regions.pop()# remove the last one because it is a dummy regions when quiting the 'Selector' view
+    regions.pop()  # remove the last one because it is a dummy regions when quiting the 'Selector' view
     cv2.destroyWindow('Selector')
     # for r in regions:
-        # plotImg(r)
+    # plotImg(r)
     return regions
 
 
 def selectROI(tmp):
-    global ImageforROI
+    global ImageforROI, regions_in_selection
+    regions = []
+    regions_in_selection = []
     title = 'ROI Selector'
     h, w = tmp.shape[:2]
     ratio = int(h / 900)
@@ -143,12 +146,39 @@ def selectROI(tmp):
         k = cv2.waitKey(1) & 0xFF
         if k == 27:
             break
+    for r in regions_in_selection:
+        y = r[r[:, 1].argsort()][0][1]
+        h = r[r[:, 1].argsort()][-1][1] - y
+        x = r[r[:, 0].argsort()][0][0]
+        w = r[r[:, 0].argsort()][-1][0] - x
+        ar = np.array([[a[0] * ratio, a[1]*ratio] for a in r])
+        mask = np.zeros(tmp.shape[:2], dtype="uint8")
+        cv2.fillPoly(mask, pts=[ar], color=(255, 255, 255))
+        # the_polygon_to_extract = tmp.copy()
+        # cv2.drawContours(the_polygon_to_extract, [ar], 0, (0, 255, 0), 3)
+        # plotImg(the_polygon_to_extract, "draw contour")
+        the_polygon_to_extract2 = tmp.copy()
 
+        # get the ROI foreground
+        fg_masked = cv2.bitwise_and(the_polygon_to_extract2, the_polygon_to_extract2, mask=mask)
+        # plotImg(fg_masked, "the_polygon_to_extract")
+
+        # for inverting the black background
+        bk = np.full(tmp.shape, 255, dtype=np.uint8)  # white bk
+        mask = cv2.bitwise_not(mask)
+        bk_masked = cv2.bitwise_and(bk, bk, mask=mask)
+
+        # final is the correct ROI with white background
+        final = cv2.bitwise_or(fg_masked, bk_masked)
+
+        regions.append(final[int(ratio * y):int(ratio * (y + h)), int(ratio * x):int(ratio * (x + w))])
+        # plotImg(final[int(ratio * y):int(ratio * (y + h)), int(ratio * x):int(ratio * (x + w))], "Final result")
+    cv2.destroyWindow(title)
     return regions
 
 
 def mouse(event, x, y, flags, param):
-    global p0, p1, p2, p3, drawing_state, ImageforROI, points, regions
+    global p0, p1, p2, p3, drawing_state, ImageforROI, points, regions_in_selection
 
     if event == cv2.EVENT_LBUTTONDOWN:
         if drawing_state == 0:
@@ -179,29 +209,13 @@ def mouse(event, x, y, flags, param):
             cv2.line(ImageforROI, p3, p0, (0, 255, 0), 2)
             points.append(p3)
             drawing_state = 0
-            regions = constructRegionsFromPoints(points)
-
-
-def constructRegionsFromPoints(points):
-    points = np.array(points)
-    #y_axis_sorted_box = points[points[:, 1].argsort()]
-    #tmp_top = np.array([y_axis_sorted_box[0], y_axis_sorted_box[1]])
-    #tmp_bottom = np.array([y_axis_sorted_box[-2], y_axis_sorted_box[-1]])
-    #(top_left, top_right) = tmp_top[tmp_top[:, 0].argsort()]
-    #(bottom_left, bottom_right) = tmp_bottom[tmp_bottom[:, 0].argsort()]
-    # TODO : extract the correct region from original image with the polygon shape from points
-    # TODO : Maybe do a mask over ImageForROI in order to extract zone then compute the minrectArea
-    mask = np.zeros(ImageforROI.shape[:2], dtype="uint8")
-    cv2.fillPoly(mask, pts=[points], color=(255, 255, 255))
-    masked = cv2.bitwise_and(ImageforROI, ImageforROI, mask=mask)
-    plotImg(masked, "Masked Image")
-    # need to extract the region from original image and then mask the imahe with a white rectangular background
-    return []
+            regions_in_selection.append(np.array(points))
+            points.clear()
 
 
 def select_boxes_in_the_png_file(png_file):
     directoryPagesFromPdfFile = os.path.join(os.getcwd(), 'PagesFromPdfFile')
-    fname = directoryPagesFromPdfFile+'\page' + str(i) + '.png'
+    fname = directoryPagesFromPdfFile + '\page' + str(i) + '.png'
     png_file.save(fname, 'PNG')
     regions_grayed = []
 
@@ -230,7 +244,7 @@ def mkdir_and_imwrite_selected_images_and_do_pytesseract(images):
         # plotImg(tmp_img)
         res = processImgtoText(tmp_img)
         for j in range(len(res)):
-            f.write(res[j]+"\n")
+            f.write(res[j] + "\n")
         f.close()
         idxImagesToPrint = idxImagesToPrint + 1
 
@@ -242,8 +256,9 @@ def computeAngle(box):
     # (top_left, top_right) = tmp_top[tmp_top[:, 0].argsort()]
     (bottom_left, bottom_right) = tmp_bottom[tmp_bottom[:, 0].argsort()]
 
-    angle = math.atan(math.fabs(bottom_left[1]-bottom_right[1])/math.fabs(bottom_left[0]-bottom_right[0]))*180/math.pi
-    if bottom_left[1] > bottom_right[1]:# pente positive
+    angle = math.atan(
+        math.fabs(bottom_left[1] - bottom_right[1]) / math.fabs(bottom_left[0] - bottom_right[0])) * 180 / math.pi
+    if bottom_left[1] > bottom_right[1]:  # pente positive
         angle = - angle
 
     return angle
@@ -267,7 +282,7 @@ def unskew_the_image(img):
     # rotate the image to deskew it
     (h, w) = img.shape[:2]
     center = (w // 2, h // 2)
-    #rotate the image of "angle" in counterclockwise way
+    # rotate the image of "angle" in counterclockwise way
     M = cv2.getRotationMatrix2D(center, angle, 1)
     rotated = cv2.warpAffine(img, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
     # print("[INFO] angle: {:.3f}".format(angle))
@@ -294,7 +309,8 @@ def exitTkinterWindow(root, keyword):
     root.quit()
 
 
-def decideWhatToDoWithTheResults(txt_value_from_complete_ref_box, txt_value_single_letter_box, txt_value_from_all_ref_boxes_from_the_selected_sheet, img):
+def decideWhatToDoWithTheResults(txt_value_from_complete_ref_box, txt_value_single_letter_box,
+                                 txt_value_from_all_ref_boxes_from_the_selected_sheet, img):
     global selected_text, VariableTextSelected, root
 
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Tkinter works only with RGB and not BGR
@@ -353,23 +369,23 @@ def decideWhatToDoWithTheResults(txt_value_from_complete_ref_box, txt_value_sing
     keyword.insert(0, txt_value_from_complete_ref_box)
     keyword.pack(pady=(0, 20))
 
-    #Style of the button
+    # Style of the button
     style = ttk.Style()
     style.configure('W.TButton', font=('calibri', 10, 'bold', 'underline'), justify='center')
 
     # Click on Button to exit after choice has been made
     btn = ttk.Button(root,
-               text='Next',
-               style='W.TButton',
-               command=lambda: exitTkinterWindow(root, keyword)
-               ).pack(pady=40, padx=20, ipadx=18, ipady=30)
+                     text='Next',
+                     style='W.TButton',
+                     command=lambda: exitTkinterWindow(root, keyword)
+                     ).pack(pady=40, padx=20, ipadx=18, ipady=30)
 
     root.mainloop()
 
     # Start again with fresh ref
     TextTab.clear()
     for widget in root.winfo_children():
-       widget.destroy()
+        widget.destroy()
     root.withdraw()
 
     return selected_text
@@ -389,48 +405,48 @@ def computeConfidenceScore(TextTab):
             (i3, s3, d3) = regex.fullmatch(refWithDiese3_Regex, txt).fuzzy_counts
             (i4, s4, d4) = regex.fullmatch(refWithDiese4_Regex, txt).fuzzy_counts
             (i5, s5, d5) = regex.fullmatch(refNum_Regex, txt).fuzzy_counts
-            best_match = min(min(min(min(i1+s1+d1,i2+s2+d2), i3+s3+d3), s4+i4+d4), s5+i5+d5)
+            best_match = min(min(min(min(i1 + s1 + d1, i2 + s2 + d2), i3 + s3 + d3), s4 + i4 + d4), s5 + i5 + d5)
             if best_match < 0:
                 best_match = 0
             elif best_match > 100:
                 best_match = 100
-            confidenceScore.append(str(int(100*(1-best_match/len(txt)))))
+            confidenceScore.append(str(int(100 * (1 - best_match / len(txt)))))
         else:
             confidenceScore.append("NaN")
     return confidenceScore
 
 
 def processImgtoText(myImg):
-    minimumSizeOfARef = 10  # A02B-XXXX- = 10 char (4+1+4+1)
-    padding_size = 20 # 15 pixels around text
+    minimumSizeOfARef = 8  # A02B-XXXX- = 10 char (4+1+4+1) --> take all line when a part of ref is detected at least 4 chars near each others
+    padding_size = 50  # 50 pixels around text
 
     myImg = cv2.copyMakeBorder(myImg, padding_size, padding_size, padding_size, padding_size,
-                                    cv2.BORDER_CONSTANT, value=[255, 255, 255])
-    myImg = cv2.GaussianBlur(myImg, (3, 3), 0)
+                               cv2.BORDER_CONSTANT, value=[255, 255, 255])
+    myImg = cv2.GaussianBlur(myImg, (7, 7), 0)
 
     myImg = unskew_the_image(myImg)
 
     # plotImg(myImg, "the Blured Padded Unskewed Image")
 
     # Separate all of the text boxes for better reading of the OCR || psm=11 not so bad || psm=12 perfect !
-    d = pytesseract.image_to_data(myImg, output_type=Output.DICT, config='--psm 12')
+    d = pytesseract.image_to_data(myImg, output_type=Output.DICT, config='--psm 11')
     # uncomment for debugging
     # n_boxes = len(d['level'])
     # theImage = myImg.copy()
     # for i in range(n_boxes):
-        # (x, y, w, h) = (d['left'][i], d['top'][i], d['width'][i], d['height'][i])
-        # cv2.rectangle(theImage, (x, y), (x + w, y + h), (0, 0, 0), 1)
+    #     (x, y, w, h) = (d['left'][i], d['top'][i], d['width'][i], d['height'][i])
+    #     cv2.rectangle(theImage, (x, y), (x + w, y + h), (0, 0, 0), 1)
     # plotImg(theImage, "the Image with Boxes")
 
     n_boxes = len(d['level'])
     res = []
     txt_value_from_all_ref_boxes_from_the_selected_sheet = ""
     for i in range(n_boxes):
-        # centers = []
         if d["text"][i] != "" and len(d["text"][i]) > minimumSizeOfARef:
             txt_value_from_all_ref_boxes_from_the_selected_sheet = d["text"][i]
             (x, y, w, h) = (d['left'][i], d['top'][i], d['width'][i], d['height'][i])
-            img_bordered = myImg[y:y + h, x:x + w]
+            # img_bordered = myImg[y:y + h, x:x + w]
+            img_bordered = myImg[y:y + h, :]
 
             # Padding of the image for better results of the OCR
             img_padded = cv2.copyMakeBorder(img_bordered, padding_size, padding_size, padding_size, padding_size,
@@ -443,7 +459,7 @@ def processImgtoText(myImg):
             # plotImg(img_padded_and_unskewed, "Unskewed")
             # From there image the text is straight
 
-            #Blur the image with a Gaussian filter of 5x5
+            # Blur the image with a Gaussian filter of 5x5
             img_unskewed_and_blured = cv2.GaussianBlur(img_padded_and_unskewed, (3, 3), 0)
             # plotImg(img_unskewed_and_blured, "img_unskewed_and_blured")
             # In order to get another result for comparing
@@ -453,20 +469,22 @@ def processImgtoText(myImg):
             # boxes = pytesseract.image_to_boxes(img_unskewed_and_blured, config='--psm 10 --oem 1 -c tessedit_char_whitelist=#-ABEFHJRSMTKVNG0123456789')
             boxes = pytesseract.image_to_boxes(img_unskewed_and_blured)
             theImage2 = img_unskewed_and_blured.copy()
-            theImage2 = cv2.adaptiveThreshold(theImage2, 170, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY, 11, 2)
+            theImage2 = cv2.adaptiveThreshold(theImage2, 170, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
             height, width = theImage2.shape  # assumes color image
             for b in boxes.splitlines():
                 b = b.split(' ')
-                theImage2 = cv2.rectangle(theImage2, (int(b[1]), height - int(b[2])), (int(b[3]), height - int(b[4])), (0, 255, 0), 1)
+                theImage2 = cv2.rectangle(theImage2, (int(b[1]), height - int(b[2])), (int(b[3]), height - int(b[4])),
+                                          (0, 255, 0), 1)
                 txt_value_single_letter_box = txt_value_single_letter_box + b[0]
-            plotImg(theImage2, "the Image with Letter Boxes")
+            # plotImg(theImage2, "the Image with Letter Boxes")
 
             txt_to_append = ""
             # psm=13 ng | psm=8 ng | psm=7 good | psm=6 ng | psm=4 ng
-            txt_value_from_complete_ref_box = pytesseract.image_to_string(img_unskewed_and_blured, config='--psm 7 --oem 1 -c tessedit_char_whitelist=#-ABEFHJRSMTKVNG0123456789')
+            txt_value_from_complete_ref_box = pytesseract.image_to_string(img_unskewed_and_blured,
+                                                                          config='--psm 7 --oem 1 -c tessedit_char_whitelist=#-ABEFHJRSMTKVNG0123456789')
             txt_value_from_complete_ref_box = txt_value_from_complete_ref_box.rstrip()
-            if txt_value_from_complete_ref_box != txt_value_single_letter_box \
-                or txt_value_single_letter_box != txt_value_from_all_ref_boxes_from_the_selected_sheet:
+            # if txt_value_from_complete_ref_box != txt_value_single_letter_box:
+            if not(txt_value_from_complete_ref_box == txt_value_single_letter_box or txt_value_from_complete_ref_box == txt_value_from_all_ref_boxes_from_the_selected_sheet):
                 print("Différent ! : " + txt_value_from_complete_ref_box + " || " + txt_value_single_letter_box + " || " + txt_value_from_all_ref_boxes_from_the_selected_sheet)
                 txt_to_append = decideWhatToDoWithTheResults(txt_value_from_complete_ref_box,
                                                              txt_value_single_letter_box,
@@ -475,6 +493,9 @@ def processImgtoText(myImg):
             else:
                 txt_to_append = txt_value_from_complete_ref_box
             res.append(txt_to_append)
+
+    # remove redundancy of ref in res
+    res = list(dict.fromkeys(res))
     return res
 
 
@@ -511,13 +532,22 @@ def extract_reference_and_create_excel_file():
     workbook.close()
 
 
+def delete_tmp_folder_and_files():
+    pathOfFolder = os.path.join(os.getcwd(), 'ImagesToPrint')
+    shutil.rmtree(pathOfFolder)
+    pathOfFolder = os.path.join(os.getcwd(), 'Text')
+    shutil.rmtree(pathOfFolder)
+    pathOfFolder = os.path.join(os.getcwd(), 'PagesFromPdfFile')
+    shutil.rmtree(pathOfFolder)
+
+
 if __name__ == '__main__':
     pages = convert_from_path(getPdfFile(), dpi=300)
     init_var()
     for i in range(len(pages)):
         # pdf = pytesseract.image_to_pdf_or_hocr(pages[i], extension='pdf')
         # with open('test.pdf', 'w+b') as f:
-            # f.write(pdf)  # pdf type is bytes by default
+        # f.write(pdf)  # pdf type is bytes by default
         images = select_boxes_in_the_png_file(pages[i])
 
         # imagesToPrint containt the rectangle for image analysis and do also pytesseract
@@ -526,3 +556,4 @@ if __name__ == '__main__':
         imagesToPrint.clear()
 
     extract_reference_and_create_excel_file()
+    delete_tmp_folder_and_files()
