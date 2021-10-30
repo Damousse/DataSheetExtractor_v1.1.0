@@ -2,7 +2,6 @@
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 # DBM - Command line to create .exe file : pyinstaller .\main.py inside the venv
 # DBM - Tesseract v5.0 installed on Windows
-# DBM - Ghostscript v9.55.0 installed on Windows (https://ghostscript.com/releases/gsdnld.html)
 # DBM - 200 dpi seems optimum & letters might have a font size of 30-33 (pixels) regarding the litterature
 # DBM - Python v=3.7 (venv)
 # https://groups.google.com/g/tesseract-ocr/c/Wdh_JJwnw94/m/24JHDYQbBQAJ
@@ -23,7 +22,7 @@ from tkinter import ttk
 import shutil
 import regex
 import math
-import tabula
+
 try:
     from PIL import Image, ImageTk
 except ImportError:
@@ -542,15 +541,7 @@ def delete_tmp_folder_and_files():
     shutil.rmtree(pathOfFolder)
 
 
-def read_pdf_assembly_list():
-    assembly_list_path_file = getPdfFile()
-    # Read pdf into list of DataFrame
-    df = tabula.read_pdf(assembly_list_path_file, pages='all')
-    # tabula.convert_into(assembly_list_path_file, "output.csv", output_format="csv", pages='all')
-    a=2
-
 if __name__ == '__main__':
-    read_pdf_assembly_list()
     pages = convert_from_path(getPdfFile(), dpi=300)
     init_var()
     for i in range(len(pages)):
@@ -566,6 +557,3 @@ if __name__ == '__main__':
 
     extract_reference_and_create_excel_file()
     delete_tmp_folder_and_files()
-
-    # Now get the assembly list for filling out the uncomplete information
-    read_pdf_assembly_list()

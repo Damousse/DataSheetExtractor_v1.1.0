@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="9d7e6a39-e9b0-4af0-9612-6c6751fc9956" name="Changes" comment="V3.0.2 : extract the enlosed polygon shape from the image">
+    <list default="true" id="9d7e6a39-e9b0-4af0-9612-6c6751fc9956" name="Changes" comment="V3.1.0 : &#10;--&gt; extract the enlosed polygon shape from the image by user click&#10;--&gt; do 3 tesseract&#10;--&gt; compare 1st &amp; 2nd tesseract first then compare if third is lying or not&#10;--&gt; approx. 1% to 3% of mistakes">
+      <change afterPath="$PROJECT_DIR$/assembly_list.pdf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/old_versions/6-All_Complete.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Results.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/Results.xlsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
@@ -36,6 +38,7 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\94000187\Documents\FANUC\source\PycharmProjects\DataSheetExtractor\old_versions" />
       <recent name="C:\Users\Damien\Documents\GitHub\DataSheetExtractor_v1.1.0\old_versions" />
       <recent name="C:\Users\94000187\Documents\FANUC\source\PycharmProjects\DataSheetExtract\old_versions" />
     </key>
@@ -170,7 +173,14 @@
       <option name="project" value="LOCAL" />
       <updated>1635106112989</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="V3.1.0 : &#10;--&gt; extract the enlosed polygon shape from the image by user click&#10;--&gt; do 3 tesseract&#10;--&gt; compare 1st &amp; 2nd tesseract first then compare if third is lying or not&#10;--&gt; approx. 1% to 3% of mistakes">
+      <created>1635545588419</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1635545588419</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -195,7 +205,8 @@
     <MESSAGE value="v2.2.0 :&#10;TO DO : finish the decision part and improve letter detection" />
     <MESSAGE value="v3.0.0 : work from A to Z&#10;--&gt; TODO : next steps is to then Read the Assembly list option" />
     <MESSAGE value="V3.0.2 : extract the enlosed polygon shape from the image" />
-    <option name="LAST_COMMIT_MESSAGE" value="V3.0.2 : extract the enlosed polygon shape from the image" />
+    <MESSAGE value="V3.1.0 : &#10;--&gt; extract the enlosed polygon shape from the image by user click&#10;--&gt; do 3 tesseract&#10;--&gt; compare 1st &amp; 2nd tesseract first then compare if third is lying or not&#10;--&gt; approx. 1% to 3% of mistakes" />
+    <option name="LAST_COMMIT_MESSAGE" value="V3.1.0 : &#10;--&gt; extract the enlosed polygon shape from the image by user click&#10;--&gt; do 3 tesseract&#10;--&gt; compare 1st &amp; 2nd tesseract first then compare if third is lying or not&#10;--&gt; approx. 1% to 3% of mistakes" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -204,6 +215,21 @@
           <url>file://$PROJECT_DIR$/old_versions/5-Last_Version_With_OCR_few_improvements_but_no_strong_enough_for_good_results.py</url>
           <line>193</line>
           <option name="timeStamp" value="58" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/main.py</url>
+          <line>553</line>
+          <option name="timeStamp" value="64" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/main.py</url>
+          <line>549</line>
+          <option name="timeStamp" value="72" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/main.py</url>
+          <line>547</line>
+          <option name="timeStamp" value="74" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
