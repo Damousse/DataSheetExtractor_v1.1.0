@@ -550,7 +550,7 @@ def read_pdf_assembly_list():
     a=2
 
 if __name__ == '__main__':
-    read_pdf_assembly_list()
+    # read_pdf_assembly_list()
     pages = convert_from_path(getPdfFile(), dpi=300)
     init_var()
     for i in range(len(pages)):
